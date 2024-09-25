@@ -16,6 +16,7 @@ export enum FieldType {
 /**
  * The generic interface for all field types
  */
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export interface BaseField {
   /**
    * The raw field data
@@ -28,6 +29,7 @@ export interface BaseField {
   readonly buffer: Buffer;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export class BaseField {
   /**
    * Declares the type of field this class represents

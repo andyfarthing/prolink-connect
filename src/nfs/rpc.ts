@@ -62,6 +62,7 @@ export class RpcConnection {
     this.mutex = new Mutex();
   }
 
+  // eslint-disable-next-line @typescript-eslint/class-literal-property-style
   get connected() {
     // TODO: Figure out what logic we can do here to determine if the socket is
     // still open.
