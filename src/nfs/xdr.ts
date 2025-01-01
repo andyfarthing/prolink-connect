@@ -1,5 +1,5 @@
-import * as XDR from 'js-xdr';
-import {calculatePadding, slicePadding} from 'js-xdr/lib/util';
+import * as XDR from '@stellar/js-xdr';
+import {calculatePadding, slicePadding} from '@stellar/js-xdr/lib/util';
 
 /**
  * A xdr type to read the rest of the data in the buffer
