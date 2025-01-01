@@ -72,25 +72,25 @@ export class MetadataORM {
 
 		const stmt = this.#conn.prepare(`insert into ${table} (${columns}) values (${slots})`);
 
-		// Translate date and booleans
-		const data = mapValues(object, value =>
-			value instanceof Date
-				? value.toISOString()
-				: typeof value === 'boolean'
-					? Number(value)
-					: value,
-		);
+    // Translate date and booleans
+    const data = mapValues(object, value =>
+      value instanceof Date
+        ? value.toISOString()
+        : typeof value === 'boolean'
+          ? Number(value)
+          : value
+    );
 
 		stmt.run(data);
 	}
 
-	/**
-	 * Locate a track by ID in the database
-	 */
-	findTrack(id: number): Track {
-		const row: Record<string, any> = this.#conn
-			.prepare(`select * from ${Table.Track} where id = ?`)
-			.get(id) as any;
+  /**
+   * Locate a track by ID in the database
+   */
+  findTrack(id: number): Track {
+    const row: Record<string, any> = this.#conn
+      .prepare<any, any>(`select * from ${Table.Track} where id = ?`)
+      .get(id);
 
 		// Map row columns to camel case compatability
 		const trackRow = mapKeys(row, (_, k) => camelCase(k)) as Track<EntityFK.WithFKs>;
@@ -124,9 +124,9 @@ export class MetadataORM {
 				continue;
 			}
 
-			const relationItem: Record<string, any> = this.#conn
-				.prepare(`select * from ${table} where id = ?`)
-				.get(fk) as any;
+      const relationItem: Record<string, any> = this.#conn
+        .prepare<any, any>(`select * from ${table} where id = ?`)
+        .get(fk);
 
 			track[relation] = relationItem;
 		}
@@ -146,19 +146,19 @@ export class MetadataORM {
 	findPlaylist(playlistId?: number) {
 		const parentCondition = playlistId === undefined ? 'parent_id is ?' : 'parent_id = ?';
 
-		// Lookup playlists / folders for this playlist ID
-		const playlistRows: Array<Record<string, any>> = this.#conn
-			.prepare(`select * from ${Table.Playlist} where ${parentCondition}`)
-			.all(playlistId) as any;
+    // Lookup playlists / folders for this playlist ID
+    const playlistRows: Array<Record<string, any>> = this.#conn
+      .prepare<any, any>(`select * from ${Table.Playlist} where ${parentCondition}`)
+      .all(playlistId);
 
 		const [folders, playlists] = partition(
 			playlistRows.map(row => mapKeys(row, (_, k) => camelCase(k)) as Playlist),
 			p => p.isFolder,
 		);
 
-		const entryRows: Array<Record<string, any>> = this.#conn
-			.prepare(`select * from ${Table.PlaylistEntry} where playlist_id = ?`)
-			.all(playlistId) as any;
+    const entryRows: Array<Record<string, any>> = this.#conn
+      .prepare<any, any>(`select * from ${Table.PlaylistEntry} where playlist_id = ?`)
+      .all(playlistId);
 
 		const trackEntries = entryRows.map(
 			row => mapKeys(row, (_, k) => camelCase(k)) as PlaylistEntry<EntityFK.WithFKs>,

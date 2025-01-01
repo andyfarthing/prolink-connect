@@ -504,8 +504,8 @@ describe('mixstatus processor', () => {
 		advanceByBeatCount(64);
 		feedState(2, {});
 
-		// Player 2 is NOT reported as live due to reportRequresSilence
-		expect(npHandler).not.toHaveBeenCalled();
+    // Player 2 is NOT reported as live due to reportRequiresSilence
+    expect(npHandler).not.toHaveBeenCalled();
 
 		// Player 1 stops and player 2 is reporte live
 		feedState(1, {playState: CDJStatus.PlayState.Cued});

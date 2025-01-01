@@ -7,7 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## Unreleased
 
-Nothing yet
+- Bumped many pacakges
+- Require Node 20 minimum version
+- Fixed a typo in `ItemType.OriginalArtist` (was mispelled as `OrigianlArtist`)
+- Small comment correction for vCDJ ID on `autoconfigFromPeers`
 
 ## [v0.11.0] - 2022-10-24
 
@@ -86,12 +89,12 @@ Nothing yet
 - The Mixstatus service's configuration has been restructured and has learned
   how to follow master.
 
-- `reportRequresSilence` has been removed
+- `reportRequiresSilence` has been removed
 
 - A new `mode` option has been introduced that configures how the mixstatus
   processor will generally determine when a track change has happened. The
   `ReportingMode` defines: `SmartTiming` (the default), `WaitsForSilence`
-  (the replacement for `reportRequresSilence`), and a new `FollowsMaster`
+  (the replacement for `reportRequiresSilence`), and a new `FollowsMaster`
   mode, which simply causes tracks to be reported when the player becomes
   master (assuming it is on air and playing).
 

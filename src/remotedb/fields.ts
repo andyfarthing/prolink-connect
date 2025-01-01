@@ -13,43 +13,35 @@ export enum FieldType {
 	String = 0x26,
 }
 
-/**
- * The generic interface for all field types
- */
-export interface BaseField {
-	/**
-	 * The raw field data
-	 */
-	data: Buffer;
-	/**
-	 * Corce the field into a buffer. This differes from reading the data
-	 * property in that it will include the field type header.
-	 */
-	readonly buffer: Buffer;
-}
+export abstract class BaseField {
+  // The constructor property (which is used to access the class from an
+  // instance of it) must be set to the BaseClass object so we can access the
+  // `.type` property.
+  //
+  // @see https://github.com/Microsoft/TypeScript/issues/3841#issuecomment-337560146
+  declare ['constructor']: typeof BaseField;
 
-export class BaseField {
-	/**
-	 * Declares the type of field this class represents
-	 */
-	static type: FieldType;
+  /**
+   * The raw field data
+   */
+  declare data: Buffer;
+  /**
+   * Corce the field into a buffer. This differs from reading the data
+   * property in that it will include the field type header.
+   */
+  abstract buffer: Buffer;
 
-	/**
-	 * The number of bytes to read for this field. If the field is not a fixed size,
-	 * set this to a function which will recieve the UInt32 value just after
-	 * reading the field type, returning the next number of bytes to read.
-	 */
-	static bytesToRead: number | ((reportedLength: number) => number);
+  /**
+   * Declares the type of field this class represents
+   */
+  static type: FieldType;
 
-	// The constructor property (which is used to access the class from an
-	// instance of it) must be set to the BaseClass object so we can access the
-	// `.type` property.
-	//
-	// @see https://github.com/Microsoft/TypeScript/issues/3841#issuecomment-337560146
-	//
-	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-	// @ts-ignore
-	['constructor']: typeof BaseField;
+  /**
+   * The number of bytes to read for this field. If the field is not a fixed size,
+   * set this to a function which will receive the UInt32 value just after
+   * reading the field type, returning the next number of bytes to read.
+   */
+  static bytesToRead: number | ((reportedLength: number) => number);
 }
 
 export type NumberField<T extends number = number> = BaseField & {
