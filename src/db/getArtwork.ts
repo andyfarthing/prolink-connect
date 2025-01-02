@@ -70,7 +70,7 @@ export async function viaLocal(
 
   try {
     return fetchFile({device, slot: trackSlot, path: track.artwork.path});
-  } catch (error) {
+  } catch {
     return null;
   }
 }
