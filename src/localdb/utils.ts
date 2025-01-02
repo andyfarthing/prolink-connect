@@ -4,11 +4,11 @@ import {CueAndLoop, HotcueButton} from 'src/types';
  * Create a CueAndLoop entry given common parameters
  */
 export const makeCueLoopEntry = (
-	isCue: boolean,
-	isLoop: boolean,
-	offset: number,
-	length: number,
-	button: false | HotcueButton,
+  isCue: boolean,
+  isLoop: boolean,
+  offset: number,
+  length: number,
+  button: false | HotcueButton
 ): null | CueAndLoop =>
   button !== false
     ? isLoop
