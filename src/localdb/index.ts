@@ -1,4 +1,3 @@
-import * as Sentry from '@sentry/node';
 import {Mutex} from 'async-mutex';
 import StrictEventEmitter from 'strict-event-emitter-types';
 
@@ -16,7 +15,6 @@ import {
   MediaSlotInfo,
   TrackType,
 } from 'src/types';
-import {getSlotName} from 'src/utils';
 
 import {MetadataORM} from './orm';
 import {hydrateDatabase, HydrationProgress} from './rekordbox';
@@ -174,15 +172,7 @@ class LocalDatabase {
    * Downloads and hydrates a new in-memory sqlite database
    */
   #hydrateDatabase = async (device: Device, slot: DatabaseSlot, media: MediaSlotInfo) => {
-    const tx = Sentry.startTransaction({name: 'hydrateDatabase'});
-
-    tx.setTag('slot', getSlotName(media.slot));
-    tx.setData('numTracks', media.trackCount.toString());
-
-    const dbCreateTx = tx.startChild({op: 'setupDatabase'});
     const orm = new MetadataORM();
-    dbCreateTx.finish();
-
     let pdbData = Buffer.alloc(0);
 
     const fetchPdbData = async (path: string) =>
@@ -190,7 +180,6 @@ class LocalDatabase {
         device,
         slot,
         path,
-        span: tx,
         onProgress: progress =>
           this.#emitter.emit('fetchProgress', {device, slot, progress}),
       }));
@@ -215,7 +204,6 @@ class LocalDatabase {
     await hydrateDatabase({
       orm,
       pdbData,
-      span: tx,
       onProgress: progress =>
         this.#emitter.emit('hydrationProgress', {device, slot, progress}),
     });
@@ -223,8 +211,6 @@ class LocalDatabase {
 
     const db = {orm, media, id: getMediaId(media)};
     this.#dbs.push(db);
-
-    tx.finish();
 
     return db;
   };

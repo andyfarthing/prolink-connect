@@ -1,4 +1,3 @@
-import {Span, SpanStatus} from '@sentry/tracing';
 import {PromiseReadable} from 'promise-readable';
 
 import {REMOTEDB_MAGIC} from 'src/remotedb/constants';
@@ -12,7 +11,7 @@ import {
   UInt32,
 } from 'src/remotedb/fields';
 import {responseTransform} from 'src/remotedb/message/response';
-import {getMessageName, MessageType, Response} from 'src/remotedb/message/types';
+import {MessageType, Response} from 'src/remotedb/message/types';
 
 /**
  * Argument types are used in argument list fields. This is essentially
@@ -66,16 +65,7 @@ export class Message<T extends MessageType = MessageType> {
   /**
    * Read a single mesasge via a readable stream
    */
-  static async fromStream<T extends Response>(
-    stream: PromiseReadable<any>,
-    expect: T,
-    span: Span
-  ) {
-    const tx = span.startChild({
-      op: 'readFromStream',
-      description: getMessageName(expect),
-    });
-
+  static async fromStream<T extends Response>(stream: PromiseReadable<any>, expect: T) {
     // 01. Read magic bytes
     const magicHeader = await readField(stream, FieldType.UInt32);
 
@@ -114,13 +104,8 @@ export class Message<T extends MessageType = MessageType> {
       const expected = expect.toString(16);
       const actual = messageType.value.toString(16);
 
-      tx.setStatus(SpanStatus.FailedPrecondition);
-      tx.finish();
-
       throw new Error(`Expected message type 0x${expected}, got 0x${actual}`);
     }
-
-    tx.finish();
 
     return new Message({
       transactionId: txId.value,

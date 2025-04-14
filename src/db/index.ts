@@ -1,6 +1,3 @@
-import * as Sentry from '@sentry/node';
-import {SpanStatus} from '@sentry/tracing';
-
 import DeviceManager from 'src/devices';
 import {Track} from 'src/entities';
 import LocalDatabase from 'src/localdb';
@@ -13,7 +10,6 @@ import {
   TrackType,
   Waveforms,
 } from 'src/types';
-import {getSlotName, getTrackTypeName} from 'src/utils';
 
 import * as GetArtwork from './getArtwork';
 import * as GetMetadata from './getMetadata';
@@ -88,17 +84,9 @@ class Database {
    * Retrieve metadata for a track on a specific device slot.
    */
   async getMetadata(opts: GetMetadata.Options) {
-    const {deviceId, trackType, trackSlot, span} = opts;
+    const {deviceId, trackType} = opts;
 
-    const tx = span
-      ? span.startChild({op: 'dbGetMetadata'})
-      : Sentry.startTransaction({name: 'dbGetMetadata'});
-
-    tx.setTag('deviceId', deviceId.toString());
-    tx.setTag('trackType', getTrackTypeName(trackType));
-    tx.setTag('trackSlot', getSlotName(trackSlot));
-
-    const callOpts = {...opts, span: tx};
+    const callOpts = {...opts};
 
     const device = await this.#deviceManager.getDeviceEnsured(deviceId);
     if (device === null) {
@@ -115,13 +103,6 @@ class Database {
     if (strategy === LookupStrategy.Local) {
       track = await GetMetadata.viaLocal(this.#localDatabase, device, callOpts);
     }
-
-    if (strategy === LookupStrategy.NoneAvailable) {
-      tx.setStatus(SpanStatus.Unavailable);
-    }
-
-    tx.finish();
-
     return track;
   }
 
@@ -129,17 +110,9 @@ class Database {
    * Retrieves the artwork for a track on a specific device slot.
    */
   async getArtwork(opts: GetArtwork.Options) {
-    const {deviceId, trackType, trackSlot, span} = opts;
+    const {deviceId, trackType} = opts;
 
-    const tx = span
-      ? span.startChild({op: 'dbGetArtwork'})
-      : Sentry.startTransaction({name: 'dbGetArtwork'});
-
-    tx.setTag('deviceId', deviceId.toString());
-    tx.setTag('trackType', getTrackTypeName(trackType));
-    tx.setTag('trackSlot', getSlotName(trackSlot));
-
-    const callOpts = {...opts, span: tx};
+    const callOpts = {...opts};
 
     const device = await this.#deviceManager.getDeviceEnsured(deviceId);
     if (device === null) {
@@ -157,12 +130,6 @@ class Database {
       artwork = await GetArtwork.viaLocal(this.#localDatabase, device, callOpts);
     }
 
-    if (strategy === LookupStrategy.NoneAvailable) {
-      tx.setStatus(SpanStatus.Unavailable);
-    }
-
-    tx.finish();
-
     return artwork;
   }
 
@@ -170,17 +137,9 @@ class Database {
    * Retrieves the waveforms for a track on a specific device slot.
    */
   async getWaveforms(opts: GetArtwork.Options) {
-    const {deviceId, trackType, trackSlot, span} = opts;
+    const {deviceId, trackType} = opts;
 
-    const tx = span
-      ? span.startChild({op: 'dbGetWaveforms'})
-      : Sentry.startTransaction({name: 'dbGetWaveforms'});
-
-    tx.setTag('deviceId', deviceId.toString());
-    tx.setTag('trackType', getTrackTypeName(trackType));
-    tx.setTag('trackSlot', getSlotName(trackSlot));
-
-    const callOpts = {...opts, span: tx};
+    const callOpts = {...opts};
 
     const device = await this.#deviceManager.getDeviceEnsured(deviceId);
     if (device === null) {
@@ -198,12 +157,6 @@ class Database {
       waveforms = await GetWaveforms.viaLocal(this.#localDatabase, device, callOpts);
     }
 
-    if (strategy === LookupStrategy.NoneAvailable) {
-      tx.setStatus(SpanStatus.Unavailable);
-    }
-
-    tx.finish();
-
     return waveforms;
   }
 
@@ -215,16 +168,9 @@ class Database {
    * same time. But the API is simpler to combine the lookup for these.
    */
   async getPlaylist(opts: GetPlaylist.Options) {
-    const {deviceId, mediaSlot, span} = opts;
+    const {deviceId, mediaSlot} = opts;
 
-    const tx = span
-      ? span.startChild({op: 'dbGetPlaylist'})
-      : Sentry.startTransaction({name: 'dbGetPlaylist'});
-
-    tx.setTag('deviceId', deviceId.toString());
-    tx.setTag('mediaSlot', getSlotName(mediaSlot));
-
-    const callOpts = {...opts, span: tx};
+    const callOpts = {...opts};
 
     const device = await this.#deviceManager.getDeviceEnsured(deviceId);
     if (device === null) {
@@ -241,12 +187,6 @@ class Database {
     if (strategy === LookupStrategy.Local) {
       contents = await GetPlaylist.viaLocal(this.#localDatabase, callOpts);
     }
-
-    if (strategy === LookupStrategy.NoneAvailable) {
-      tx.setStatus(SpanStatus.Unavailable);
-    }
-
-    tx.finish();
 
     return contents;
   }

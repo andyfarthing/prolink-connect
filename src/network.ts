@@ -1,7 +1,3 @@
-import * as Sentry from '@sentry/node';
-import {SpanStatus} from '@sentry/tracing';
-
-import {randomUUID} from 'crypto';
 import dgram, {Socket} from 'dgram';
 import {NetworkInterfaceInfoIPv4} from 'os';
 
@@ -88,9 +84,6 @@ export type ConnectedProlinkNetwork = ProlinkNetwork & {
  * This is the primary entrypoint for connecting to the prolink network.
  */
 export async function bringOnline(config?: NetworkConfig) {
-  Sentry.setTag('connectionId', randomUUID());
-  const tx = Sentry.startTransaction({name: 'bringOnline'});
-
   // Socket used to listen for devices on the network
   const announceSocket = dgram.createSocket('udp4');
 
@@ -100,22 +93,12 @@ export async function bringOnline(config?: NetworkConfig) {
   // Socket used to listen for status packets
   const statusSocket = dgram.createSocket('udp4');
 
-  try {
-    await udpBind(announceSocket, ANNOUNCE_PORT, '0.0.0.0');
-    await udpBind(beatSocket, BEAT_PORT, '0.0.0.0');
-    await udpBind(statusSocket, STATUS_PORT, '0.0.0.0');
-  } catch (err) {
-    Sentry.captureException(err);
-    tx.setStatus(SpanStatus.Unavailable);
-    tx.finish();
-
-    throw err;
-  }
+  await udpBind(announceSocket, ANNOUNCE_PORT, '0.0.0.0');
+  await udpBind(beatSocket, BEAT_PORT, '0.0.0.0');
+  await udpBind(statusSocket, STATUS_PORT, '0.0.0.0');
 
   const deviceManager = new DeviceManager(announceSocket);
   const statusEmitter = new StatusEmitter(statusSocket);
-
-  tx.finish();
 
   const network = new ProlinkNetwork({
     config,
@@ -185,7 +168,6 @@ export class ProlinkNetwork {
    * Defaults the Virtual CDJ ID to 7.
    */
   async autoconfigFromPeers() {
-    const tx = Sentry.startTransaction({name: 'autoConfigure'});
     // wait for first device to appear on the network
     const firstDevice = await new Promise<Device>(resolve =>
       this.#deviceManager.once('connected', resolve)
@@ -194,20 +176,11 @@ export class ProlinkNetwork {
 
     // Log addr and iface addr / mask for cases where it may have matched the
     // wrong interface
-    tx.setTag('deviceName', firstDevice.name);
-    tx.setData('deviceAddr', firstDevice.ip.address);
-    tx.setData('ifaceAddr', iface?.address);
-
     if (iface === null) {
-      tx.setStatus(SpanStatus.InternalError);
-      tx.setTag('noIfaceFound', 'yes');
-      tx.finish();
-
       throw new Error('Unable to determine network interface');
     }
 
     this.#config = {...this.#config, vcdjId: DEFAULT_VCDJ_ID, iface};
-    tx.finish();
   }
 
   /**
@@ -220,8 +193,6 @@ export class ProlinkNetwork {
     if (this.#config === null) {
       throw new Error(connectErrorHelp);
     }
-
-    const tx = Sentry.startTransaction({name: 'connect'});
 
     // Create VCDJ for the interface's broadcast address
     const vcdj = getVirtualCDJ(this.#config.iface, this.#config.vcdjId);
@@ -242,8 +213,6 @@ export class ProlinkNetwork {
 
     this.#state = NetworkState.Connected;
     this.#connection = {announcer, control, remotedb, localdb, database};
-
-    tx.finish();
   }
 
   /**

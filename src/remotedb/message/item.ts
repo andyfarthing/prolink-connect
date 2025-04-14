@@ -1,5 +1,3 @@
-import * as Sentry from '@sentry/node';
-
 import {Field, NumberField, StringField} from 'src/remotedb/fields';
 
 /**
@@ -226,11 +224,6 @@ export const fieldsToItem = (args: Field[]) => {
   // not aware of yet.
   if (transformer === undefined) {
     transformer = () => null;
-
-    Sentry.captureMessage(
-      `No item transformer registered for item type ${type}`,
-      Sentry.Severity.Error
-    );
   }
 
   return {...transformer(itemData), type} as Items[ItemType];

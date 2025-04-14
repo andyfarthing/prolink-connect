@@ -1,5 +1,3 @@
-import {Span} from '@sentry/tracing';
-
 import {Track} from 'src/entities';
 import LocalDatabase from 'src/localdb';
 import {loadAnlz} from 'src/localdb/rekordbox';
@@ -25,14 +23,10 @@ export interface Options {
    * The track to lookup waveforms for
    */
   track: Track;
-  /**
-   * The Sentry transaction span
-   */
-  span?: Span;
 }
 
 export async function viaRemote(remote: RemoteDatabase, opts: Required<Options>) {
-  const {deviceId, trackSlot, trackType, track, span} = opts;
+  const {deviceId, trackSlot, trackType, track} = opts;
 
   const conn = await remote.get(deviceId);
   if (conn === null) {
@@ -49,7 +43,6 @@ export async function viaRemote(remote: RemoteDatabase, opts: Required<Options>)
     queryDescriptor,
     query: Query.GetWaveformHD,
     args: {trackId: track.id},
-    span,
   });
 
   return {waveformHd} as Waveforms;

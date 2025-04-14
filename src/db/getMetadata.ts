@@ -1,5 +1,3 @@
-import {Span} from '@sentry/tracing';
-
 import LocalDatabase from 'src/localdb';
 import {loadAnlz} from 'src/localdb/rekordbox';
 import RemoteDatabase, {MenuTarget, Query} from 'src/remotedb';
@@ -24,14 +22,10 @@ export interface Options {
    * The track id to retrieve metadata for
    */
   trackId: number;
-  /**
-   * The Sentry transaction span
-   */
-  span?: Span;
 }
 
 export async function viaRemote(remote: RemoteDatabase, opts: Required<Options>) {
-  const {deviceId, trackSlot, trackType, trackId, span} = opts;
+  const {deviceId, trackSlot, trackType, trackId} = opts;
 
   const conn = await remote.get(deviceId);
   if (conn === null) {
@@ -48,21 +42,18 @@ export async function viaRemote(remote: RemoteDatabase, opts: Required<Options>)
     queryDescriptor,
     query: Query.GetMetadata,
     args: {trackId},
-    span,
   });
 
   track.filePath = await conn.query({
     queryDescriptor,
     query: Query.GetTrackInfo,
     args: {trackId},
-    span,
   });
 
   track.beatGrid = await conn.query({
     queryDescriptor,
     query: Query.GetBeatGrid,
     args: {trackId},
-    span,
   });
 
   return track;

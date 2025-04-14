@@ -1,5 +1,3 @@
-import {Span} from '@sentry/tracing';
-
 import {Playlist} from 'src/entities';
 import LocalDatabase from 'src/localdb';
 import RemoteDatabase, {MenuTarget, Query} from 'src/remotedb';
@@ -19,14 +17,10 @@ export interface Options {
    * The media slot the track is present in
    */
   mediaSlot: MediaSlot;
-  /**
-   * The Sentry transaction span
-   */
-  span?: Span;
 }
 
 export async function viaRemote(remote: RemoteDatabase, opts: Options) {
-  const {playlist, deviceId, mediaSlot, span} = opts;
+  const {playlist, deviceId, mediaSlot} = opts;
 
   const conn = await remote.get(deviceId);
   if (conn === null) {
@@ -46,7 +40,6 @@ export async function viaRemote(remote: RemoteDatabase, opts: Options) {
     queryDescriptor,
     query: Query.MenuPlaylist,
     args: {id, isFolderRequest},
-    span,
   });
 
   const iterateTracks = async function* () {
@@ -59,7 +52,6 @@ export async function viaRemote(remote: RemoteDatabase, opts: Options) {
         queryDescriptor,
         query: Query.GetMetadata,
         args: {trackId: entry.id},
-        span,
       });
     }
   };

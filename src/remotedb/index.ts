@@ -1,5 +1,3 @@
-import * as Sentry from '@sentry/node';
-import {Span} from '@sentry/tracing';
 import {Mutex} from 'async-mutex';
 import * as ip from 'ip-address';
 import PromiseSocket from 'promise-socket';
@@ -9,7 +7,7 @@ import {Socket} from 'net';
 import DeviceManager from 'src/devices';
 import {Device, DeviceID, MediaSlot, TrackType} from 'src/types';
 
-import {getMessageName, MessageType, Request, Response} from './message/types';
+import {MessageType, Request, Response} from './message/types';
 import {REMOTEDB_SERVER_QUERY_PORT} from './constants';
 import {readField, UInt32} from './fields';
 import {Message} from './message';
@@ -70,10 +68,6 @@ interface QueryOpts<T extends Query> {
    * Arguments to pass to the query. These are query specific
    */
   args: HandlerArgs<T>;
-  /**
-   * The sentry span to associate the query with
-   */
-  span?: Span;
 }
 
 /**
@@ -120,19 +114,13 @@ export class Connection {
     this.device = device;
   }
 
-  async writeMessage(message: Message, span: Span) {
-    const tx = span.startChild({
-      op: 'writeMessage',
-      description: getMessageName(message.type),
-    });
-
+  async writeMessage(message: Message) {
     message.transactionId = ++this.#txId;
     await this.#socket.write(message.buffer);
-    tx.finish();
   }
 
-  readMessage<T extends Response>(expect: T, span: Span) {
-    return this.#lock.runExclusive(() => Message.fromStream(this.#socket, expect, span));
+  readMessage<T extends Response>(expect: T) {
+    return this.#lock.runExclusive(() => Message.fromStream(this.#socket, expect));
   }
 
   close() {
@@ -155,14 +143,8 @@ export class QueryInterface {
    * Make a query to the remote database connection.
    */
   async query<T extends Query>(opts: QueryOpts<T>): Promise<Await<HandlerReturn<T>>> {
-    const {query, queryDescriptor, args, span} = opts;
+    const {query, queryDescriptor, args} = opts;
     const conn = this.#conn;
-
-    const queryName = getQueryName(opts.query);
-
-    const tx = span
-      ? span.startChild({op: 'remoteQuery', description: queryName})
-      : Sentry.startTransaction({name: 'remoteQuery', description: queryName});
 
     const lookupDescriptor: LookupDescriptor = {
       ...queryDescriptor,
@@ -178,9 +160,8 @@ export class QueryInterface {
     const handler = queryHandlers[query];
 
     const releaseLock = await this.#lock.acquire();
-    const response = await handler({conn, lookupDescriptor, span: tx, args: anyArgs});
+    const response = await handler({conn, lookupDescriptor, args: anyArgs});
     releaseLock();
-    tx.finish();
 
     return response as Await<HandlerReturn<T>>;
   }
@@ -211,8 +192,6 @@ export default class RemoteDatabase {
    * Open a connection to the specified device for querying
    */
   connectToDevice = async (device: Device) => {
-    const tx = Sentry.startTransaction({name: 'connectRemotedb', data: {device}});
-
     const {ip} = device;
 
     const dbPort = await getRemoteDBServerPort(ip);
@@ -240,22 +219,19 @@ export default class RemoteDatabase {
     });
 
     await socket.write(intro.buffer);
-    const resp = await Message.fromStream(socket, MessageType.Success, tx);
+    const resp = await Message.fromStream(socket, MessageType.Success);
 
     if (resp.type !== MessageType.Success) {
       throw new Error(`Failed to introduce self to device ID: ${device.id}`);
     }
 
     this.#connections.set(device.id, new Connection(device, socket));
-    tx.finish();
   };
 
   /**
    * Disconnect from the specified device
    */
   disconnectFromDevice = async (device: Device) => {
-    const tx = Sentry.startTransaction({name: 'disconnectFromDevice', data: {device}});
-
     const conn = this.#connections.get(device.id);
 
     if (conn === undefined) {
@@ -268,11 +244,10 @@ export default class RemoteDatabase {
       args: [],
     });
 
-    await conn.writeMessage(goodbye, tx);
+    await conn.writeMessage(goodbye);
 
     conn.close();
     this.#connections.delete(device.id);
-    tx.finish();
   };
 
   /**

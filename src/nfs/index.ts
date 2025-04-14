@@ -1,8 +1,4 @@
-import * as Sentry from '@sentry/node';
-import {Span} from '@sentry/tracing';
-
 import {Device, DeviceID, MediaSlot} from 'src/types';
-import {getSlotName} from 'src/utils';
 
 import {
   fetchFile as fetchFileCall,
@@ -88,7 +84,6 @@ interface GetRootHandleOptions {
   device: Device;
   slot: keyof typeof slotMountMapping;
   mountClient: RpcProgram;
-  span?: Span;
 }
 
 /**
@@ -106,9 +101,7 @@ const rootHandleCache = new Map<string, Map<MediaSlot, Buffer>>();
  *       verify this). It is up to the caller to clear the cache and get the
  *       new root handle in that case.
  */
-async function getRootHandle({device, slot, mountClient, span}: GetRootHandleOptions) {
-  const tx = span?.startChild({op: 'getRootHandle'});
-
+async function getRootHandle({device, slot, mountClient}: GetRootHandleOptions) {
   const {address} = device.ip;
 
   const deviceSlotCache = rootHandleCache.get(address) ?? new Map<MediaSlot, Buffer>();
@@ -118,19 +111,17 @@ async function getRootHandle({device, slot, mountClient, span}: GetRootHandleOpt
     return cachedRootHandle;
   }
 
-  const exports = await getExports(mountClient, tx);
+  const exports = await getExports(mountClient);
   const targetExport = exports.find(e => e.filesystem === slotMountMapping[slot]);
 
   if (targetExport === undefined) {
     return null;
   }
 
-  const rootHandle = await mountFilesystem(mountClient, targetExport, tx);
+  const rootHandle = await mountFilesystem(mountClient, targetExport);
 
   deviceSlotCache.set(slot, rootHandle);
   rootHandleCache.set(address, deviceSlotCache);
-
-  tx?.finish();
 
   return rootHandle;
 }
@@ -140,7 +131,6 @@ interface FetchFileOptions {
   slot: keyof typeof slotMountMapping;
   path: string;
   onProgress?: Parameters<typeof fetchFileCall>[2];
-  span?: Span;
 }
 
 const badRoothandleError = (slot: MediaSlot, deviceId: DeviceID) =>
@@ -154,19 +144,9 @@ const badRoothandleError = (slot: MediaSlot, deviceId: DeviceID) =>
  *       important that when the device disconnects you call the {@link
  *       resetDeviceCache} function.
  */
-export async function fetchFile({
-  device,
-  slot,
-  path,
-  onProgress,
-  span,
-}: FetchFileOptions) {
-  const tx = span
-    ? span.startChild({op: 'fetchFile'})
-    : Sentry.startTransaction({name: 'fetchFile'});
-
+export async function fetchFile({device, slot, path, onProgress}: FetchFileOptions) {
   const {mountClient, nfsClient} = await getClients(device.ip.address);
-  const rootHandle = await getRootHandle({device, slot, mountClient, span: tx});
+  const rootHandle = await getRootHandle({device, slot, mountClient});
 
   if (rootHandle === null) {
     throw badRoothandleError(slot, device.id);
@@ -177,25 +157,20 @@ export async function fetchFile({
   let fileInfo: FileInfo | null = null;
 
   try {
-    fileInfo = await lookupPath(nfsClient, rootHandle, path, tx);
+    fileInfo = await lookupPath(nfsClient, rootHandle, path);
   } catch {
     rootHandleCache.delete(device.ip.address);
-    const rootHandle = await getRootHandle({device, slot, mountClient, span: tx});
+    const rootHandle = await getRootHandle({device, slot, mountClient});
 
     if (rootHandle === null) {
       throw badRoothandleError(slot, device.id);
     }
 
     // Desperately try once more to lookup the file
-    fileInfo = await lookupPath(nfsClient, rootHandle, path, tx);
+    fileInfo = await lookupPath(nfsClient, rootHandle, path);
   }
 
-  const file = await fetchFileCall(nfsClient, fileInfo, onProgress, tx);
-
-  tx.setData('path', path);
-  tx.setData('slot', getSlotName(slot));
-  tx.setData('size', fileInfo.size);
-  tx.finish();
+  const file = await fetchFileCall(nfsClient, fileInfo, onProgress);
 
   return file;
 }

@@ -33,8 +33,6 @@
   },
   "sideEffects": false,
   "dependencies": {
-    "@sentry/node": "^6.4.1",
-    "@sentry/tracing": "^6.4.1",
     "@types/better-sqlite3": "^7.6.12",
     "@types/lodash": "^4.17.13",
     "@types/node": "22.10.2",

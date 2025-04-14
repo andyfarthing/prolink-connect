@@ -1,6 +1,3 @@
-import * as Sentry from '@sentry/node';
-import {Span} from '@sentry/tracing';
-
 import {Track} from 'src/entities';
 import LocalDatabase from 'src/localdb';
 import {fetchFile} from 'src/nfs';
@@ -24,14 +21,10 @@ export interface Options {
    * The track to lookup artwork for
    */
   track: Track;
-  /**
-   * The Sentry transaction span
-   */
-  span?: Span;
 }
 
 export async function viaRemote(remote: RemoteDatabase, opts: Required<Options>) {
-  const {deviceId, trackSlot, trackType, track, span} = opts;
+  const {deviceId, trackSlot, trackType, track} = opts;
 
   const conn = await remote.get(deviceId);
   if (conn === null) {
@@ -52,7 +45,6 @@ export async function viaRemote(remote: RemoteDatabase, opts: Required<Options>)
     queryDescriptor,
     query: Query.GetArtwork,
     args: {artworkId: track.artwork.id},
-    span,
   });
 }
 
@@ -79,7 +71,7 @@ export async function viaLocal(
   try {
     return fetchFile({device, slot: trackSlot, path: track.artwork.path});
   } catch (error) {
-    Sentry.captureException(error);
+    console.error('Failed to fetch artwork', error);
     return null;
   }
 }
