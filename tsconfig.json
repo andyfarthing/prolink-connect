@@ -1,24 +1,32 @@
 {
   "compilerOptions": {
-    "target": "ES2019",
-    "module": "CommonJS",
-    "lib": ["ScriptHost", "ES2020"],
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "lib": ["ES2022"],
     "allowJs": true,
     "downlevelIteration": true,
     "strict": true,
     "strictPropertyInitialization": true,
-    "moduleResolution": "node",
     "esModuleInterop": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "sourceMap": true,
     "skipLibCheck": true,
+    "noEmit": true,
     "baseUrl": "./",
-    "paths": {"src/*": ["src/*"]},
+    "paths": {
+      "src/*": ["src/*"]
+    },
+    "typeRoots": ["./node_modules/@types", "./src/types"],
     "plugins": [{"transform": "typescript-transform-paths", "afterDeclarations": true}]
   },
   "ts-node": {
     "transpileOnly": true,
-    "require": ["typescript-transform-paths/register"]
-  }
+    "require": ["typescript-transform-paths/register"],
+    "moduleTypes": {
+      "**/*.ts": "esm"
+    }
+  },
+  "include": ["src/**/*", "tests/**/*"]
 }

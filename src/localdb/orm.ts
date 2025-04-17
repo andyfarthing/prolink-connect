@@ -1,9 +1,11 @@
 import sqlite3 from 'better-sqlite3';
-import {camelCase, mapKeys, mapValues, partition, snakeCase} from 'lodash';
+import lodash from 'lodash';
 
 import {EntityFK, Playlist, PlaylistEntry, Track} from 'src/entities';
 
 import {generateSchema} from './schema';
+
+const {camelCase, mapKeys, mapValues, partition, snakeCase} = lodash;
 
 /**
  * Table names available

@@ -13,8 +13,7 @@ import {
   PlaylistEntry,
   Track,
 } from 'src/entities';
-import RekordboxAnlz from 'src/localdb/kaitai/rekordbox_anlz.ksy';
-import RekordboxPdb from 'src/localdb/kaitai/rekordbox_pdb.ksy';
+import {RekordboxAnlz, RekordboxPdb} from 'src/localdb/kaitai';
 import {MetadataORM, Table} from 'src/localdb/orm';
 import {makeCueLoopEntry} from 'src/localdb/utils';
 import {BeatGrid, CueAndLoop, HotcueButton, WaveformHD} from 'src/types';
