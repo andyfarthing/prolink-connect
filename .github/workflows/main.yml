@@ -16,6 +16,9 @@ jobs:
         with:
           fetch-depth: 0 # Fetch full history including tags
       - uses: volta-cli/action@v4
+      - uses: actions/setup-node@v4
+        with:
+          registry-url: 'https://registry.npmjs.org'
 
       - run: npm ci
       - run: npx ts-patch install -s
