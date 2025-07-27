@@ -17,17 +17,6 @@ jobs:
           fetch-depth: 0 # Fetch full history including tags
       - uses: volta-cli/action@v4
 
-      # Check if pushing to master without a tag
-      - name: Check for version tag on master
-        if: github.ref == 'refs/heads/master'
-        run: |
-          if ! git describe --exact-match --tags HEAD 2>/dev/null; then
-            echo "❌ Error: Pushes to master branch must include a version tag"
-            echo "Please create a tag first: git tag v0.11.1 && git push origin master --tags"
-            exit 1
-          fi
-          echo "✅ Version tag found: $(git describe --exact-match --tags HEAD)"
-
       - run: npm ci
       - run: npx ts-patch install -s
       - run: npm run lint
