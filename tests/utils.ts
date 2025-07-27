@@ -3,8 +3,13 @@
 import * as ip from 'ip-address';
 
 import {readFile} from 'fs/promises';
+import {dirname} from 'path';
+import {fileURLToPath} from 'url';
 
 import {Device, DeviceType} from 'src/types';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 export function readMock(path: string) {
   return readFile(`${__dirname}/_data/${path}`);

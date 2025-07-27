@@ -1,5 +1,6 @@
 const config = {
-  preset: 'ts-jest',
+  preset: 'ts-jest/presets/default-esm',
+  extensionsToTreatAsEsm: ['.ts'],
   testEnvironment: 'node',
   testMatch: ['<rootDir>/tests//**/*(*.)@(spec|test).ts'],
   moduleNameMapper: {
@@ -7,7 +8,12 @@ const config = {
     '^tests/(.*)$': '<rootDir>/tests/$1',
   },
   transform: {
-    '^.+\\.tsx?$': ['ts-jest'],
+    '^.+\\.tsx?$': [
+      'ts-jest',
+      {
+        useESM: true,
+      },
+    ],
   },
 };
 

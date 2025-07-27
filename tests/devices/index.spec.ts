@@ -1,17 +1,18 @@
-import {mockDevice} from 'tests/utils';
+import {describe, expect, it, jest} from '@jest/globals';
+import type {Socket} from 'dgram';
 
-import {Socket} from 'dgram';
-import {EventEmitter} from 'events';
+// Mock the utils module using the ES module approach
+const mockDeviceFromPacket = jest.fn();
 
-import {VIRTUAL_CDJ_NAME} from 'src/constants';
-import DeviceManager from 'src/devices';
-import {deviceFromPacket} from 'src/devices/utils';
-
-jest.mock('src/devices/utils', () => ({
-  deviceFromPacket: jest.fn(),
+jest.unstable_mockModule('src/devices/utils', () => ({
+  deviceFromPacket: mockDeviceFromPacket,
 }));
 
-const dfpMock = deviceFromPacket as jest.Mock<ReturnType<typeof deviceFromPacket>>;
+// Dynamic imports after mocking
+const {mockDevice} = await import('tests/utils');
+const {EventEmitter} = await import('events');
+const {VIRTUAL_CDJ_NAME} = await import('src/constants');
+const {default: DeviceManager} = await import('src/devices');
 
 jest.useFakeTimers();
 
@@ -35,12 +36,12 @@ describe('DeviceManager', () => {
 
     const deviceExample = mockDevice();
 
-    dfpMock.mockReturnValue(deviceExample);
+    mockDeviceFromPacket.mockReturnValue(deviceExample);
 
     // Trigger device announcement
     mockSocket.emit('message', deadBeef);
 
-    expect(deviceFromPacket).toHaveBeenCalledWith(deadBeef);
+    expect(mockDeviceFromPacket).toHaveBeenCalledWith(deadBeef);
     expect(connectedFn).toHaveBeenCalledWith(deviceExample);
     expect(announceFn).toHaveBeenCalledWith(deviceExample);
     expect(dm.devices.size).toBe(1);
@@ -94,7 +95,7 @@ describe('DeviceManager', () => {
     const announceFn = jest.fn();
     dm.on('announced', announceFn);
 
-    dfpMock.mockReturnValue(null);
+    mockDeviceFromPacket.mockReturnValue(null);
 
     // Trigger device announcement
     mockSocket.emit('message', Buffer.of());
@@ -111,7 +112,7 @@ describe('DeviceManager', () => {
 
     const deviceExample = mockDevice({name: VIRTUAL_CDJ_NAME});
 
-    dfpMock.mockReturnValue(deviceExample);
+    mockDeviceFromPacket.mockReturnValue(deviceExample);
 
     // Trigger device announcement
     mockSocket.emit('message', Buffer.of());
@@ -128,7 +129,7 @@ describe('DeviceManager', () => {
 
     jest.advanceTimersByTime(75);
 
-    dfpMock.mockReturnValue(deviceExample);
+    mockDeviceFromPacket.mockReturnValue(deviceExample);
 
     // Trigger device announcement
     mockSocket.emit('message', Buffer.of());
@@ -148,7 +149,7 @@ describe('DeviceManager', () => {
   it('immedaitely returns a device when it already exists using getDeviceEnsured', async () => {
     const dm = new DeviceManager(mockSocket, {deviceTimeout: 100});
     const deviceExample = mockDevice();
-    dfpMock.mockReturnValue(deviceExample);
+    mockDeviceFromPacket.mockReturnValue(deviceExample);
     mockSocket.emit('message', Buffer.of());
 
     await expect(dm.getDeviceEnsured(1, 100)).resolves.toBe(deviceExample);

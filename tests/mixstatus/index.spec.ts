@@ -1,3 +1,5 @@
+import {beforeEach, describe, expect, it, jest} from '@jest/globals';
+
 import {MixstatusProcessor} from 'src/mixstatus';
 import {CDJStatus, MediaSlot, MixstatusMode, TrackType} from 'src/types';
 import {bpmToSeconds} from 'src/utils';
