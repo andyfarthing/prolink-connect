@@ -14,8 +14,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: volta-cli/action@v4
-      - run: npm ci # Install all dependencies including devDependencies
-      - run: npx ts-patch install -s # Set up ts-patch using npx
+      - run: npm ci
+      - run: npx ts-patch install -s
       - run: npm run lint
       - run: npm test
       - run: npm run build
