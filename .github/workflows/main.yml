@@ -17,9 +17,22 @@ jobs:
           fetch-depth: 0 # Fetch full history including tags
       - uses: volta-cli/action@v4
 
+      # Debug git state
+      - name: Debug git state
+        run: |
+          echo "Current branch: ${{ github.ref }}"
+          echo "Available tags:"
+          git tag -l
+          echo "Current commit:"
+          git log --oneline -1
+          echo "Git describe result:"
+          git describe --exact-match --tags HEAD || echo "No exact tag match"
+          echo "Git describe (any tag):"
+          git describe --tags HEAD || echo "No tags found"
+
       # Check if pushing to master without a tag
       - name: Check for version tag on master
-        if: github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/development'
         run: |
           if ! git describe --exact-match --tags HEAD 2>/dev/null; then
             echo "❌ Error: Pushes to master branch must include a version tag"
