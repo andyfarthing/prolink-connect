@@ -13,6 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch full history including tags
       - uses: volta-cli/action@v4
 
       # Check if pushing to master without a tag
