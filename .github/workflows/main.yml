@@ -23,6 +23,13 @@ jobs:
       - run: npm test
       - run: npm run build
 
+      # Publish to npm on master branch
+      - name: Publish to npm
+        if: github.ref == 'refs/heads/master'
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
       # Create draft releases for development branch
       - name: Create Draft Release (Development)
         if: github.ref == 'refs/heads/development'
