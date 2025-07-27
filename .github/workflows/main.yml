@@ -2,9 +2,9 @@ name: build
 on:
   push:
     tags:
-      - 'v*'  # Run on version tags for releases
+      - 'v*' # Run on version tags for releases
     branches:
-      - '*'   # Run on all branch pushes
+      - '*' # Run on all branch pushes
   workflow_dispatch:
 
 jobs:
@@ -14,7 +14,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: volta-cli/action@v4
-      - run: npm ci
+      - run: npm ci # Install ALL dependencies including devDependencies
+      - run: ts-patch install -s # Set up ts-patch
       - run: npm run lint
       - run: npm test
       - run: npm run build

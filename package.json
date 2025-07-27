@@ -28,7 +28,7 @@
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "lint": "eslint src/**/*.ts tests/**/*.ts",
     "preversion": "npm run lint && npm test",
-    "prepare": "npm run build && npm ci --production",
+    "prepare": "npm run build && npm ci --production || npm run build",
     "postinstall": "ts-patch install -s || true"
   },
   "files": [
