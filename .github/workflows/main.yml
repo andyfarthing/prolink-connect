@@ -34,9 +34,36 @@ jobs:
       - run: npm test
       - run: npm run build
 
-      # Create releases only for version tags
-      - name: Create Release
+      # Create draft releases for development branch
+      - name: Create Draft Release (Development)
+        if: github.ref == 'refs/heads/development'
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: true
+          files: |
+            lib/**/*
+            package.json
+            README.md
+          generate_release_notes: true
+          tag_name: 'dev-${{ github.run_number }}'
+          name: 'Development Build ${{ github.run_number }}'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Create proper releases for version tags on master
+      - name: Check if tag is on master
+        id: check_master
         if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          # Check if the tag points to a commit that's on master
+          if git branch --contains HEAD | grep -q master; then
+            echo "on_master=true" >> $GITHUB_OUTPUT
+          else
+            echo "on_master=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Release (Master)
+        if: startsWith(github.ref, 'refs/tags/v') && steps.check_master.outputs.on_master == 'true'
         uses: softprops/action-gh-release@v1
         with:
           files: |
