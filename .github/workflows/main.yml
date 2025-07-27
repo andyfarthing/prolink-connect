@@ -1,5 +1,11 @@
 name: build
-on: [push, workflow_dispatch]
+on:
+  push:
+    tags:
+      - 'v*'  # Run on version tags for releases
+    branches:
+      - '*'   # Run on all branch pushes
+  workflow_dispatch:
 
 jobs:
   build:
@@ -12,3 +18,16 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run build
+
+      # Create release with built files
+      - name: Create Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            lib/**/*
+            package.json
+            README.md
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
